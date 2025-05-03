@@ -24,7 +24,8 @@ CLOUDLOGIN
 #Recuperando la URL de la consola#
 consoleurl=$( ibmcloud pi ins con get  $InstanceName --json|jq .consoleURL|tr -d '"')
 echo $consoleurl
-#Abriendo el navegador
+#Opening Microsoft Edge Browser (Linux)
 microsoft-edge-stable  $consoleurl  2>&1 &
+# open -a "Microsoft Edge" --url "$consoleurl"  # For MacOS
 echo ""
 exit 0
