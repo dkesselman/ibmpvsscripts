@@ -15,5 +15,5 @@ These BASH scripts were created for Linux (also work on WSL2), and can be easily
 
 Requirements:
 
-jq: To parse and filter json data
-ibmcloud CLI: to make these scripts work
+* jq: To parse and filter json data
+* ibmcloud CLI: to make these scripts work
