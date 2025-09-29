@@ -37,39 +37,38 @@ echo 'Start IBM i instance export job'
 echo '==============================='
 
 # List volumes attached to the instance to an auxiliary file
-ibmcloud pi ins vol list $InstanceName |cut  -c1-36|grep -v ID>/tmp/pvsinstance_volumenes.lst
+ibmcloud pi ins vol list $InstanceName |cut  -c1-36|grep -v ID>/tmp/pvsinstance_volumes.lst
 
-    # Concateno los ID de los volúmenes en una variable
+    # Chain all volume names in one single string
     vols='';
     while read line 
         do 
         vols=$vols$line','
-    done < /tmp/pvsinstance_volumenes.lst
-    # Quito la última ','
+    done < /tmp/pvsinstance_volumes.lst
+    # Remove last ',' character
     vols=${vols:0:-1}
 
-#Ejecuto la exportación
-ibmcloud pi ins cap cr $InstanceName --destination $InCapDest --name $ImageName --volumes "$vols" --image-path $BucketName --region $Region --access-key $AccessKey --secret-key $SecretKey > /tmp/xiku_capture_job.txt || { error=1;errmsg="Error exportando la instancia";echo $errmsg; }
+# Capture/Export job starts
+ibmcloud pi ins cap cr $InstanceName --destination $InCapDest --name $ImageName --volumes "$vols" --image-path $BucketName --region $Region --access-key $AccessKey --secret-key $SecretKey > /tmp/capture_job.txt || { error=1;errmsg="Error exporting VSI";echo $errmsg; }
 
 
 if (($error == 0))
 then
     echo '============================'
-    echo 'Espero 5 minutos a que termine la captura'
-    #Espero 5 minutos (En las pruebas terminò en menos de 1 minuto)
+    echo 'Wait 5 minutes'
     sleep 5m
 fi
 
 echo '============================'
-echo 'Reanudo actividad en base de datos'
-# Libero la actividad en disco de la base de datos
+echo 'Resume database activity'
+# Resume database activity
 DB2RESUME
 }
 #=========================================================#
 EXPORTMAIL(){
 
-# Preparo envio de mail
-echo "Enviando Correo";
+# Create email content
+echo "Sending email";
 cp mail_status.txt mail_status2.txt
 echo 'Date: '$dt >> $stsfile
 echo "--------------------------------------------------------------------------" >> mail_status2.txt
@@ -77,17 +76,17 @@ echo ""                                                                         
 
 if (($error == 0))
     then
-    errmsg = "Captura Exitosa"
+    errmsg = "Export: Successful"
     echo $errmsg                                                                  >> mail_status2.txt
     echo ""                                                                       >> mail_status2.txt
-    echo "Archivo >>"$ImageName"<< en proceso de captura"                         >> mail_status2.txt
+    echo "File >>"$ImageName"<< running capture process"                          >> mail_status2.txt
     echo "======================================================================" >> mail_status2.txt
     ibmcloud pi job ls   --operation-action vmCapture                                >> mail_status2.txt
     echo "======================================================================" >> mail_status2.txt
 else
     if [[ "$errmsg" ==  "" ]]
     then
-        errmsg = "Error durante la captura"        
+        errmsg = "Error during capture procedure"        
         echo $errmsg                                                              >> mail_status2.txt
     fi
 fi
@@ -95,7 +94,7 @@ fi
 echo ""                                                                           >> mail_status2.txt
 echo "--------------------------------------------------------------------------" >> mail_status2.txt
 
-curl --url $mailserver --ssl-reqd --mail-from $mailfrom --mail-rcpt $receptor --user $mailaccount --insecure --upload-file mail_status2.txt || { error=1;errmsg="Error al enviar correo";echo $errmsg; }
+curl --url $mailserver --ssl-reqd --mail-from $mailfrom --mail-rcpt $receptor --user $mailaccount --insecure --upload-file mail_status2.txt || { error=1;errmsg="Error sending email";echo $errmsg; }
 }
 #=========================================================#
 EXPORTCHECK(){
@@ -104,15 +103,15 @@ status=$(ibmcloud pi ins cap show $InstanceName --json|jq .status.state|tr -d '"
 if [ "$status" == "running" ]
 then
 	echo ''
-        echo '============================================' 
-	echo "Export en ejecución - Intente más tarde"
+    echo '============================================' 
+	echo "Previous capture job running - Retry later      "
 	echo '============================================'
 	errorcheck=1;
 else
 	errorcheck=0;
 	echo ''
         echo '============================================'
-        echo "Listo para ejecutar Export - Continuamos    "
+        echo "Ready to run Export job - Continue          "
         echo '============================================'
 fi
 }
