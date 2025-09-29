@@ -4,6 +4,7 @@ echo '=================';
 echo 'Suspend Db2 for i';
 echo '=================';
 #  Quiesce the database - Suspend Database disk activity
+# Warning: QUIESCING *SYSBAS ASP can cause services to stop working. With iASP this works with no issues #
 ssh $UserID@$SvrAddr  "system 'CHGASPACT ASPDEV(*SYSBAS) OPTION(*FRCWRT)';system 'CHGASPACT ASPDEV(*SYSBAS) OPTION(*SUSPEND) SSPTIMO(120)'"
 
 }
@@ -14,17 +15,9 @@ ssh $UserID@$SvrAddr  "system 'CHGASPACT ASPDEV(*SYSBAS) OPTION(*RESUME)'" || { 
 #=========================================================#
 CLOUDLOGIN(){
 # Login to the account
-echo 'Login process start'
-ibmcloud login --apikey $apikey -r $Region -g "$RESOURCE_GROUP" > /dev/null
-error=$?
-if (($error == 0))
-then
-	ibmcloud target -r "$Region" -g "$RESOURCE_GROUP" > /dev/null
-	ibmcloud pi ws tg "$Resource" > /dev/null
-else
-	echo 'Error during login process'
-	exit 1
-fi
+ibmcloud login --apikey $apikey -r $Region -g "$RESOURCE_GROUP"
+ibmcloud target -r "$Region" -g "$RESOURCE_GROUP"
+ibmcloud pi ws tg "$Resource"
 }
 #=========================================================#
 PVSEXPORT(){
@@ -46,7 +39,8 @@ ibmcloud pi ins vol list $InstanceName |cut  -c1-36|grep -v ID>/tmp/pvsinstance_
         vols=$vols$line','
     done < /tmp/pvsinstance_volumes.lst
     # Remove last ',' character
-    vols=${vols:0:-1}
+    len=${#vols};
+    vols=${vols:0:len-1};
 
 # Capture/Export job starts
 ibmcloud pi ins cap cr $InstanceName --destination $InCapDest --name $ImageName --volumes "$vols" --image-path $BucketName --region $Region --access-key $AccessKey --secret-key $SecretKey > /tmp/capture_job.txt || { error=1;errmsg="Error exporting VSI";echo $errmsg; }
