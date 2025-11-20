@@ -25,19 +25,19 @@ else
 fi
 
 if [[ -n "$3" ]]; then
-  SubNet==$3
+  SubNet=$3
 else
   SubNet='subnet1'
 fi
 
 if [[ -n "$4" ]]; then
-  IPAddr==$4
+  IPAddr=$4
 else
   IPAddr='192.168.1.123'
 fi
 
 if [[ -n "$5" ]]; then
-  SysType==$5
+  SysType=$5
 else
   SysType='s1022'
 fi
