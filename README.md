@@ -7,11 +7,12 @@ The general idea is to usual admin/operator tasks skipping portal login page.
 
 These BASH scripts were created for Linux (also work on WSL2), and can be easily ported to PowerShell.
 
-* console.sh : Open a browser (Microsoft Edge) with LPAR's web-console.
-* EXPORT_LPAR.sh: Export instance to IBM Cloud Object Storage.
-* EXPORT_CHECK.sh : Shows export status for an instance (LPAR).
-* SnapShot_LPAR.sh: Similar to EXPORT_LPAR.sh, but creates a snapshot.
-* EXPORT_LPAR_functions.inc : Functions to include in these scripts (global variables)
+* PVS_console.sh : Open a browser with LPAR's web-console.
+* PVS_EXPORT_VSI.sh: Export instance to IBM Cloud Object Storage.
+* PVS_CLONE_VSI.sh : Export instance as Boot Image, wait for Active status an create a new VSI with this image.
+* PVS_CRTfrmEXP.sh: Create a new VSI from latest export. 
+* PVS_functions.sh : Functions to include in these scripts (global variables)
+* PVS_const.sh : These are the constants and variables include file to make things work.
 
 Requirements:
 
