@@ -25,10 +25,11 @@ source PVS_functions.sh
 # Login #
 CLOUDLOGIN
 
+#Retrieve VSI ID
+VSI_ID=$(ibmcloud pi ins ls |grep $VSINAME|cut -f1 -d' ')
 # Retrieve console URL #
-consoleurl=$( ibmcloud pi ins con get  $VSINAME --json|jq .consoleURL|tr -d '"')
+consoleurl=$( ibmcloud pi ins con get  $VSI_ID --json|jq .consoleURL|tr -d '"')
 echo $consoleurl
 #Open Web Browser - Change for your system
 open $consoleurl 
-echo ""
 exit 0
