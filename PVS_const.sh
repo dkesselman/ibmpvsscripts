@@ -44,4 +44,5 @@ mailfrom='<Emal FROM>'
 receptor='<Recipient>'
 mailserver='<SMTP server>'
 ###############################################
-
+# Misc
+Browser='Firefox'
