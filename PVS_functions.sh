@@ -68,7 +68,7 @@ PVSEXPORTGET
 PVSEXPORTCLEAN
 
 # Run image export job
-ibmcloud pi ins cap cr $InstanceName --destination $InCapDest --name $ImageName --volumes "$vols" --image-path $BucketName --region $Region --access-key $AccessKey --secret-key $SecretKey > /tmp/PVS_capture_job.txt || { error=1;errmsg="Error exportando la instancia";echo $errmsg; }
+ibmcloud pi ins cap cr $InstanceName --destination $InCapDest --name $ImageName --volumes "$vols" --image-path $BucketName --region $Region --access-key $AccessKey --secret-key $SecretKey > /tmp/xiku_capture_job.txt || { error=1;errmsg="Error exportando la instancia";echo $errmsg; }
 
 
 if [ $error == 0 ]
@@ -85,7 +85,7 @@ then
         while ($ImageGet|grep queued)
         do
             echo '============================'
-	        date 
+            date 
             sleep 30
         done
     fi
@@ -146,15 +146,15 @@ done
 #=========================================================#
 EXPORTCHECK(){
 status=$(ibmcloud pi ins cap show $InstanceName --json|jq .status.state|tr -d '"');
-if [ $status == "running" ]
+if [ "$status" == "running" ]
 then
-	echo ''
+    echo ''
     echo '================================================' 
-	echo "There is an export job running - Try again later"
-	echo '================================================'
-	errorcheck=1;
+    echo "There is an export job running - Try again later"
+    echo '================================================'
+    errorcheck=1;
 else
-	errorcheck=0;
+    errorcheck=0;
 fi
 }
 #=========================================================#
@@ -181,7 +181,7 @@ ibmcloud pi ins vol list $InstanceName |cut  -c1-36|grep -v ID>/tmp/pvsinstance_
     vols=${vols:0:len-1};
 
 # Run the export process
-ibmcloud pi ins cap cr $InstanceName --destination $InCapDest --name $ImageName --volumes "$vols" --image-path $BucketName --region $Region --access-key $AccessKey --secret-key $SecretKey > /tmp/PVS_capture_job.txt || { error=1;errmsg="Error exportando la instancia";echo $errmsg; }
+ibmcloud pi ins cap cr $InstanceName --destination $InCapDest --name $ImageName --volumes "$vols" --image-path $BucketName --region $Region --access-key $AccessKey --secret-key $SecretKey > /tmp/xiku_capture_job.txt || { error=1;errmsg="Error exportando la instancia";echo $errmsg; }
 
 
 if [ $error == 0 ]
@@ -221,3 +221,36 @@ ibmcloud pi ins create $NewVSINAME --image $ImageName --subnets "$SubNet $IPAddr
 GETPREVIMGNAME(){
     PrevImageName=$(cat /tmp/PVS_EXPORT_VSI_imagename.txt)
 }
+#=========================================================#
+EXPORT2COS(){
+    ibmcloud pi img ex $ImageName -a $AccessKey -s $SecretKey -r $Region -b $BucketName 
+}
+#=========================================================#
+VSICHANGESTGTIER(){
+echo '==============================='
+echo 'Start IBM i instance export job'
+echo '==============================='
+
+# List volumes attached to the instance to an auxiliary file
+ibmcloud pi ins vol list $InstanceName |cut  -c1-36|grep -v ID>/tmp/pvsinstance_volumenes.lst
+# Chain Volume IDs in one variable
+vols='';
+while read line 
+do 
+    ibmcloud pi vol act $line --target-tier $VSISTGTIER
+    echo "Changing volume: " $line " to tier: " $VSISTGTIER
+    vols=$vols$line','
+done < /tmp/pvsinstance_volumenes.lst
+# Remove last ','
+len=${#vols};
+vols=${vols:0:len-1};
+}
+#=========================================================#
+GETCONSOLE(){
+#Get WebConsole URL#
+consoleurl=$( ibmcloud pi ins con get  $VSINAME --json|jq .consoleURL|tr -d '"')
+echo $consoleurl
+# Open Web Browser 
+open -a $Browser $consoleurl
+}
+#=========================================================#
